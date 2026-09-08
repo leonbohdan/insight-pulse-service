@@ -1,0 +1,116 @@
+{
+  "info": {
+    "_postman_id": "8f85f1c9-6a34-4b51-93e1-ef0db32ca121",
+    "name": "InsightPulse Reporting Engine",
+    "description": "API collection for testing InsightPulse Reporting Engine (MongoDB Aggregation Pipeline and Seeding)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "1. Seed Test Orders (10,000)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/seed?count=10000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "seed"
+              ],
+              "query": [
+                {
+                  "key": "count",
+                  "value": "10000",
+                  "description": "Кількість замовлень для генерації (за замовчуванням 10000)"
+                }
+              ]
+            },
+            "description": "Генерує та записує партію тестових замовлень за останні 60 днів з ймовірнісним розподілом статусів (~70% COMPLETED, 15% CANCELLED, 15% REFUNDED)."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Get Category Revenue Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/categories?startDate=2026-07-01T00:00:00.000Z&endDate=2026-09-08T23:59:59.999Z",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "categories"
+              ],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2026-07-01T00:00:00.000Z",
+                  "description": "Початкова дата аналітичного періоду (ISO 8601)"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2026-09-08T23:59:59.999Z",
+                  "description": "Кінцева дата аналітичного періоду (ISO 8601)"
+                }
+              ]
+            },
+            "description": "Виконує 5-етапний Aggregation Pipeline: $match (status: COMPLETED, orderedAt в діапазоні), $project, $group (totalRevenue, averageOrderValue, totalOrders, totalItems), $project (форматування та $round), $sort за спаданням totalRevenue."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Clear / Delete All Orders",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/delete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "delete"
+              ]
+            },
+            "description": "Повністю очищає колекцію orderanalytics перед новим посівом."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "App Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            ""
+          ]
+        },
+        "description": "Базовий перевірочний ендпоінт кореневого контролера."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}

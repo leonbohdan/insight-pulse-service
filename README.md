@@ -129,9 +129,9 @@ graph TD
 
 ## 🌐 API Specification
 
-### Category Revenue Report
+### 1. Category Revenue Report
 ```http
-GET /analytics/categories?startDate=2026-07-01&endDate=2026-09-01
+GET /analytics/categories?startDate=2026-07-01T00:00:00.000Z&endDate=2026-09-08T23:59:59.999Z
 ```
 
 **Query Parameters (`DateRangeDto`):**
@@ -143,20 +143,41 @@ GET /analytics/categories?startDate=2026-07-01&endDate=2026-09-01
 [
   {
     "category": "Tech",
-    "totalRevenue": 142500.50,
-    "totalOrders": 320,
-    "totalItems": 580,
-    "averageOrderValue": 445.31
+    "totalRevenue": 915877,
+    "totalOrders": 1788,
+    "totalItems": 10101,
+    "averageOrderValue": 512.24
   },
   {
-    "category": "Home",
-    "totalRevenue": 89400.00,
-    "totalOrders": 210,
-    "totalItems": 430,
-    "averageOrderValue": 425.71
+    "category": "Fashion",
+    "totalRevenue": 872872,
+    "totalOrders": 1764,
+    "totalItems": 9907,
+    "averageOrderValue": 494.83
   }
 ]
 ```
+
+### 2. Seed Test Orders
+```http
+POST /analytics/seed?count=10000
+```
+- **Query Parameter**: `count` (number, optional, defaults to 10,000).
+- Generates and batch-inserts orders over the last 60 days with ~70% `COMPLETED`, 15% `CANCELLED`, and 15% `REFUNDED` statuses.
+
+### 3. Clear All Orders
+```http
+DELETE /analytics/delete
+```
+- Drops all documents in the `orderanalytics` collection for clean benchmarks.
+
+---
+
+## 📮 Postman Collection
+
+A ready-to-import Postman Collection v2.1.0 is available:
+- **Location**: [`docs/postman/insight-pulse-service.postman_collection.json`](file:///home/bohdan/MyProjects/test_projects/insight-pulse-service/docs/postman/insight-pulse-service.postman_collection.json)
+- Includes pre-configured requests for seeding, running category aggregations, resetting data, and health checks.
 
 ---
 
@@ -202,15 +223,10 @@ npm run test:e2e
 npm run lint
 ```
 
-### 6. Seed Analytics Data
-Populate the database with 10,000 test orders:
-```bash
-npm run seed:analytics
-```
-
 ---
 
-## 📚 Roadmap & Tasks
+## 📚 Documentation & Summary
 - [docs/task_1.md](file:///home/bohdan/MyProjects/test_projects/insight-pulse-service/docs/task_1.md):
   - **Task 1**: Docker Environment for MongoDB (`mongo_db` + `mongo_express`). *(Completed)*
-  - **Task 2**: Basic Aggregation Pipeline in NestJS (Mongoose schema, Seeding, AnalyticsService, AnalyticsController).
+  - **Task 2**: Basic Aggregation Pipeline in NestJS (Mongoose schema, Seeding, AnalyticsService, AnalyticsController). *(Completed)*
+- [docs/task_1_summary.md](file:///home/bohdan/MyProjects/test_projects/insight-pulse-service/docs/task_1_summary.md): Detailed implementation summary, benchmark verification, and interview preparation questions (`allowDiskUse`, ESR indexing rule, RAM limits).

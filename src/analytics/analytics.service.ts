@@ -213,6 +213,98 @@ export class AnalyticsService {
     return order;
   }
 
+  getTopOrdersWithMargin(limit: number = 10) {
+    return this.orderAnalyticsModel.aggregate([
+      {
+        $match: {
+          status: OrderStatus.COMPLETED,
+        },
+      },
+      {
+        $lookup: {
+          from: this.productModel.collection.name,
+          let: { itemIds: '$items.productId' },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $in: ['$_id', '$$itemIds'] },
+              },
+            },
+            {
+              $project: {
+                _id: 1,
+                title: 1,
+                costPrice: 1,
+              },
+            },
+          ],
+          as: 'productDetails',
+        },
+      },
+      {
+        $addFields: {
+          totalCost: {
+            $sum: {
+              $map: {
+                input: '$items',
+                as: 'item',
+                in: {
+                  $multiply: [
+                    '$$item.quantity',
+                    {
+                      $let: {
+                        vars: {
+                          matchedProduct: {
+                            $arrayElemAt: [
+                              {
+                                $filter: {
+                                  input: '$productDetails',
+                                  as: 'p',
+                                  cond: {
+                                    $eq: ['$$p._id', '$$item.productId'],
+                                  },
+                                },
+                              },
+                              0,
+                            ],
+                          },
+                        },
+                        in: { $ifNull: ['$$matchedProduct.costPrice', 0] },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          margin: { $subtract: ['$totalPrice', '$totalCost'] },
+        },
+      },
+      {
+        $addFields: {
+          marginPercentage: {
+            $cond: [
+              { $gt: ['$totalPrice', 0] },
+              {
+                $round: [
+                  { $multiply: [{ $divide: ['$margin', '$totalPrice'] }, 100] },
+                  2,
+                ],
+              },
+              0,
+            ],
+          },
+        },
+      },
+      { $sort: { margin: -1 } },
+      { $limit: Math.max(1, Math.floor(Number(limit) || 10)) },
+    ]);
+  }
+
   async deleteOrders() {
     const [orders, customers, products] = await Promise.all([
       this.orderAnalyticsModel.deleteMany({}),

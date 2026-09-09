@@ -17,6 +17,11 @@ export class AnalyticsController {
     return this.analyticsService.seedOrders(count);
   }
 
+  @Get('orders/top-margin')
+  async getTopOrdersWithMargin(@Query('limit') limit: number = 10) {
+    return this.analyticsService.getTopOrdersWithMargin(limit);
+  }
+
   @Get('orders/:orderId')
   async getOrderDetailsWithCustomer(@Param('orderId') orderId: string) {
     return this.analyticsService.getOrderDetailsWithCustomer(orderId);

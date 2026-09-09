@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Post, Query } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { DateRangeDto } from './dto/date-range.dto.js';
 import { AnalyticsService } from './analytics.service.js';
 
@@ -15,6 +15,11 @@ export class AnalyticsController {
   @Post('seed')
   async seedOrders(@Query('count') count: number = 10000) {
     return this.analyticsService.seedOrders(count);
+  }
+
+  @Get('orders/:orderId')
+  async getOrderDetailsWithCustomer(@Param('orderId') orderId: string) {
+    return this.analyticsService.getOrderDetailsWithCustomer(orderId);
   }
 
   @Delete('delete')

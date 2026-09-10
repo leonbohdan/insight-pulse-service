@@ -26,11 +26,27 @@ export class OrderAnalytics {
   @Prop({ required: true })
   itemsCount: number;
 
-  @Prop({ required: true, enum: Object.values(OrderStatus) })
+  @Prop({ required: true, type: String, enum: Object.values(OrderStatus) })
   status: OrderStatus;
 
   @Prop({ required: true, index: true })
   orderedAt: Date;
+
+  @Prop({
+    type: [
+      {
+        productId: { type: String, required: true },
+        quantity: { type: Number, required: true },
+        price: { type: Number, required: true },
+      },
+    ],
+    default: [],
+  })
+  items: {
+    productId: string;
+    quantity: number;
+    price: number;
+  }[];
 }
 
 export type OrderAnalyticsDocument = HydratedDocument<OrderAnalytics>;

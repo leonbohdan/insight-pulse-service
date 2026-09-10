@@ -9,12 +9,15 @@ export class AnalyticsController {
   @Get('categories')
   async getCategoryRevenueReport(@Query() dateRangeDto: DateRangeDto) {
     const { startDate, endDate } = dateRangeDto;
+
     return this.analyticsService.getCategoryRevenueReport(startDate, endDate);
   }
 
-  @Post('seed')
-  async seedOrders(@Query('count') count: number = 10000) {
-    return this.analyticsService.seedOrders(count);
+  @Get('dashboard')
+  async getExecutiveDashboard(@Query() dateRangeDto: DateRangeDto) {
+    const { startDate, endDate } = dateRangeDto;
+
+    return this.analyticsService.getExecutiveDashboard(startDate, endDate);
   }
 
   @Get('orders/top-margin')
@@ -25,6 +28,11 @@ export class AnalyticsController {
   @Get('orders/:orderId')
   async getOrderDetailsWithCustomer(@Param('orderId') orderId: string) {
     return this.analyticsService.getOrderDetailsWithCustomer(orderId);
+  }
+
+  @Post('seed')
+  async seedOrders(@Query('count') count: number = 10000) {
+    return this.analyticsService.seedOrders(count);
   }
 
   @Delete('delete')

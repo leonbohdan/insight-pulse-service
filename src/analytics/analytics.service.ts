@@ -3,6 +3,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomUUID } from 'node:crypto';
 
+import { ExecutiveDashboardResponseDto } from './dto/executive-dashboard-response.dto.js';
+
 import {
   OrderAnalytics,
   OrderAnalyticsDocument,
@@ -303,6 +305,131 @@ export class AnalyticsService {
       { $sort: { margin: -1 } },
       { $limit: Math.max(1, Math.floor(Number(limit) || 10)) },
     ]);
+  }
+
+  async getExecutiveDashboard(
+    startDate: Date,
+    endDate: Date,
+  ): Promise<ExecutiveDashboardResponseDto> {
+    const [result] = await this.orderAnalyticsModel.aggregate([
+      {
+        $match: {
+          status: OrderStatus.COMPLETED,
+          orderedAt: {
+            $gte: startDate,
+            $lte: endDate,
+          },
+        },
+      },
+      {
+        $facet: {
+          summary: [
+            {
+              $group: {
+                _id: null,
+                totalRevenue: { $sum: '$totalPrice' },
+                totalOrders: { $sum: 1 },
+                avgOrderValue: { $avg: '$totalPrice' },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                totalRevenue: 1,
+                totalOrders: 1,
+                avgOrderValue: {
+                  $round: [
+                    {
+                      $ifNull: ['$avgOrderValue', 0],
+                    },
+                    2,
+                  ],
+                },
+              },
+            },
+          ],
+          topProducts: [
+            { $unwind: '$items' },
+            {
+              $group: {
+                _id: '$items.productId',
+                totalSold: { $sum: '$items.quantity' },
+                totalRevenue: {
+                  $sum: { $multiply: ['$items.quantity', '$items.price'] },
+                },
+              },
+            },
+            { $sort: { totalRevenue: -1 } },
+            { $limit: 5 },
+            {
+              $lookup: {
+                from: this.productModel.collection.name,
+                localField: '_id',
+                foreignField: '_id',
+                as: 'product',
+              },
+            },
+            {
+              $unwind: {
+                path: '$product',
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                productId: '$_id',
+                title: '$product.title',
+                totalSold: 1,
+                totalRevenue: 1,
+              },
+            },
+          ],
+          categoryBreakdown: [
+            {
+              $group: {
+                _id: '$category',
+                totalRevenue: { $sum: '$totalPrice' },
+                orderCount: { $sum: 1 },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                category: '$_id',
+                totalRevenue: 1,
+                orderCount: 1,
+              },
+            },
+            { $sort: { totalRevenue: -1 } },
+          ],
+          priceTiers: [
+            {
+              $bucket: {
+                groupBy: '$totalPrice',
+                boundaries: [0, 100, 500, 1000, 5000],
+                default: 'VIP (5000+)',
+                output: {
+                  count: { $sum: 1 },
+                  totalRevenue: { $sum: '$totalPrice' },
+                },
+              },
+            },
+          ],
+        },
+      },
+    ]);
+
+    return {
+      summary: result?.summary?.[0] ?? {
+        totalRevenue: 0,
+        avgOrderValue: 0,
+        totalOrders: 0,
+      },
+      topProducts: result?.topProducts ?? [],
+      categoryBreakdown: result?.categoryBreakdown ?? [],
+      priceTiers: result?.priceTiers ?? [],
+    };
   }
 
   async deleteOrders() {

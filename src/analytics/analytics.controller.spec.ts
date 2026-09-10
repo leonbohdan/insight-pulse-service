@@ -8,6 +8,7 @@ describe('AnalyticsController', () => {
 
   const mockAnalyticsService = {
     getCategoryRevenueReport: vi.fn(),
+    getExecutiveDashboard: vi.fn(),
     seedOrders: vi.fn(),
     getTopOrdersWithMargin: vi.fn(),
     getOrderDetailsWithCustomer: vi.fn(),
@@ -38,6 +39,15 @@ describe('AnalyticsController', () => {
     const query = { startDate: new Date(), endDate: new Date() };
     await controller.getCategoryRevenueReport(query);
     expect(mockAnalyticsService.getCategoryRevenueReport).toHaveBeenCalledWith(
+      query.startDate,
+      query.endDate,
+    );
+  });
+
+  it('should call getExecutiveDashboard', async () => {
+    const query = { startDate: new Date('2026-01-01'), endDate: new Date('2026-02-01') };
+    await controller.getExecutiveDashboard(query);
+    expect(mockAnalyticsService.getExecutiveDashboard).toHaveBeenCalledWith(
       query.startDate,
       query.endDate,
     );

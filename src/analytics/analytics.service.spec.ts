@@ -167,6 +167,126 @@ describe('AnalyticsService', () => {
     });
   });
 
+  describe('getExecutiveDashboard', () => {
+    it('should execute facet aggregation and return structured executive dashboard', async () => {
+      const startDate = new Date('2026-01-01');
+      const endDate = new Date('2026-02-01');
+
+      const mockFacetResult = [
+        {
+          summary: [
+            {
+              totalRevenue: 15000,
+              totalOrders: 10,
+              avgOrderValue: 1500,
+            },
+          ],
+          topProducts: [
+            {
+              productId: 'prod-1',
+              title: 'Tech Product 1',
+              totalSold: 20,
+              totalRevenue: 8000,
+            },
+          ],
+          categoryBreakdown: [
+            {
+              category: 'Tech',
+              totalRevenue: 10000,
+              orderCount: 6,
+            },
+          ],
+          priceTiers: [
+            {
+              _id: 1000,
+              count: 5,
+              totalRevenue: 9000,
+            },
+          ],
+        },
+      ];
+
+      mockOrderModel.aggregate.mockResolvedValue(mockFacetResult);
+
+      const result = await service.getExecutiveDashboard(startDate, endDate);
+
+      expect(result).toEqual({
+        summary: {
+          totalRevenue: 15000,
+          totalOrders: 10,
+          avgOrderValue: 1500,
+        },
+        topProducts: mockFacetResult[0].topProducts,
+        categoryBreakdown: mockFacetResult[0].categoryBreakdown,
+        priceTiers: mockFacetResult[0].priceTiers,
+      });
+
+      expect(mockOrderModel.aggregate).toHaveBeenCalledTimes(1);
+      const pipeline = mockOrderModel.aggregate.mock.calls[0][0];
+      expect(pipeline[0]).toEqual({
+        $match: {
+          status: OrderStatus.COMPLETED,
+          orderedAt: {
+            $gte: startDate,
+            $lte: endDate,
+          },
+        },
+      });
+      expect(pipeline[1].$facet).toBeDefined();
+      expect(pipeline[1].$facet.summary).toBeDefined();
+      expect(pipeline[1].$facet.topProducts).toBeDefined();
+      expect(pipeline[1].$facet.categoryBreakdown).toBeDefined();
+      expect(pipeline[1].$facet.priceTiers).toBeDefined();
+    });
+
+    it('should return fallback defaults when aggregation returns empty arrays', async () => {
+      const startDate = new Date('2026-01-01');
+      const endDate = new Date('2026-02-01');
+
+      mockOrderModel.aggregate.mockResolvedValue([
+        {
+          summary: [],
+          topProducts: [],
+          categoryBreakdown: [],
+          priceTiers: [],
+        },
+      ]);
+
+      const result = await service.getExecutiveDashboard(startDate, endDate);
+
+      expect(result).toEqual({
+        summary: {
+          totalRevenue: 0,
+          avgOrderValue: 0,
+          totalOrders: 0,
+        },
+        topProducts: [],
+        categoryBreakdown: [],
+        priceTiers: [],
+      });
+    });
+
+    it('should return fallback defaults when aggregation returns empty result', async () => {
+      const startDate = new Date('2026-01-01');
+      const endDate = new Date('2026-02-01');
+
+      mockOrderModel.aggregate.mockResolvedValue([]);
+
+      const result = await service.getExecutiveDashboard(startDate, endDate);
+
+      expect(result).toEqual({
+        summary: {
+          totalRevenue: 0,
+          avgOrderValue: 0,
+          totalOrders: 0,
+        },
+        topProducts: [],
+        categoryBreakdown: [],
+        priceTiers: [],
+      });
+    });
+  });
+
   describe('deleteOrders', () => {
     it('should delete from orders, customers, and products collections', async () => {
       mockOrderModel.deleteMany.mockResolvedValue({ deletedCount: 15 });

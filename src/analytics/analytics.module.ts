@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 
 import { AnalyticsService } from './analytics.service.js';
 import { AnalyticsController } from './analytics.controller.js';
+import { AnalyticsResolver } from './analytics.resolver.js';
 
 import {
   OrderAnalytics,
@@ -19,7 +20,7 @@ import { Customer, CustomerSchema } from './schemas/customer.schema.js';
       { name: Customer.name, schema: CustomerSchema },
     ]),
   ],
-  providers: [AnalyticsService],
+  providers: [AnalyticsService, AnalyticsResolver],
   exports: [MongooseModule, AnalyticsService],
   controllers: [AnalyticsController],
 })

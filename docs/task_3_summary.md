@@ -15,7 +15,7 @@
    - Встановлено базові пакети GraphQL: `@nestjs/graphql`, `@nestjs/apollo`, `@apollo/server`, `graphql`.
    - **Вирішення специфіки NestJS 12 (Express 5)**: оскільки NestJS 12 за замовчуванням базується на `Express 5`, для зв'язки з Apollo Server було додано офіційний адаптер `@as-integrations/express5`.
 
-2. **Конфігурація `GraphQLModule` у [src/app.module.ts](file:///home/bohdan/MyProjects/test_projects/insight-pulse-service/src/app.module.ts)**:
+2. **Конфігурація `GraphQLModule` у [src/app.module.ts](../src/app.module.ts)**:
    ```typescript
    GraphQLModule.forRoot<ApolloDriverConfig>({
      driver: ApolloDriver,
@@ -30,16 +30,16 @@
    - `playground: true` — інтеграція веб-інтерфейсу для інтерактивного тестування запитів.
 
 3. **Опис моделей через декоратори (`Code-First`)**:
-   - Створено файл [src/analytics/models/category-report.model.ts](file:///home/bohdan/MyProjects/test_projects/insight-pulse-service/src/analytics/models/category-report.model.ts):
+   - Створено файл [src/analytics/models/category-report.model.ts](../src/analytics/models/category-report.model.ts):
      - **`CategoryMetrics`**: описує аналітичні показники (`totalRevenue: Float`, `totalOrders: Int`, `averageOrderValue: Float`).
      - **`CategoryReport`**: описує звіт категорії (`id: ID`, `category: String`, вкладений об'єкт `metrics: CategoryMetrics`).
 
 4. **Створення DTO вхідних параметрів (`InputType`)**:
-   - Створено файл [src/analytics/dto/date-range.input.ts](file:///home/bohdan/MyProjects/test_projects/insight-pulse-service/src/analytics/dto/date-range.input.ts):
+   - Створено файл [src/analytics/dto/date-range.input.ts](../src/analytics/dto/date-range.input.ts):
      - Клас `DateRangeInput` позначено декоратором `@InputType('DateRangeInput')`.
      - Поля `startDate` та `endDate` з типом `Date`, налаштовані як `{ nullable: true }` та валідовані за допомогою `@IsOptional()` і `@IsDate()`.
 
-5. **Автоматично згенерована схема [src/schema.gql](file:///home/bohdan/MyProjects/test_projects/insight-pulse-service/src/schema.gql)**:
+5. **Автоматично згенерована схема [src/schema.gql](../src/schema.gql)**:
    ```graphql
    type CategoryMetrics {
      averageOrderValue: Float!
@@ -86,7 +86,7 @@
 
 ### Що реалізовано:
 
-1. **Створення `AnalyticsResolver` у [src/analytics/analytics.resolver.ts](file:///home/bohdan/MyProjects/test_projects/insight-pulse-service/src/analytics/analytics.resolver.ts)**:
+1. **Створення `AnalyticsResolver` у [src/analytics/analytics.resolver.ts](../src/analytics/analytics.resolver.ts)**:
    - Декоратор `@Resolver(() => CategoryReport)` пов'язує резолвер із моделлю звіту.
    - Впроваджено залежність `AnalyticsService` через конструктор (Dependency Injection).
 
@@ -123,7 +123,7 @@
      ```
    - Поле обчислюється динамічно на льоту лише тоді, коли клієнт явно запитує його в тілі GraphQL-запиту.
 
-5. **Підключення до модуля [src/analytics/analytics.module.ts](file:///home/bohdan/MyProjects/test_projects/insight-pulse-service/src/analytics/analytics.module.ts)**:
+5. **Підключення до модуля [src/analytics/analytics.module.ts](../src/analytics/analytics.module.ts)**:
    - `AnalyticsResolver` додано до масиву `providers`.
 
 ---

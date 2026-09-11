@@ -13,6 +13,15 @@ type CategoryReport {
   formattedSummary: String!
   id: ID!
   metrics: CategoryMetrics!
+  topCustomerId: String
+  topPerformerCustomer: Customer
+}
+
+type Customer {
+  email: String!
+  id: ID!
+  name: String!
+  tier: String!
 }
 
 input DateRangeInput {

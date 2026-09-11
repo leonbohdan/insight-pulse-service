@@ -12,6 +12,8 @@ import {
 import { Product, ProductSchema } from './schemas/product.schema.js';
 import { Customer, CustomerSchema } from './schemas/customer.schema.js';
 
+import { CustomerLoaderFactory } from './loaders/customer.loader.js';
+
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -20,8 +22,8 @@ import { Customer, CustomerSchema } from './schemas/customer.schema.js';
       { name: Customer.name, schema: CustomerSchema },
     ]),
   ],
-  providers: [AnalyticsService, AnalyticsResolver],
-  exports: [MongooseModule, AnalyticsService],
+  providers: [AnalyticsService, AnalyticsResolver, CustomerLoaderFactory],
+  exports: [MongooseModule, AnalyticsService, CustomerLoaderFactory],
   controllers: [AnalyticsController],
 })
 export class AnalyticsModule {}

@@ -11,20 +11,23 @@ import { AnalyticsService } from './analytics.service.js';
 import { DateRangeInput } from './dto/date-range.input.js';
 import { CustomerModel } from './models/customer.model.js';
 import type { CustomerDataLoader } from './loaders/customer.loader.js';
+import { UseGuards } from '@nestjs/common';
+import { GqlThrottlerGuard } from './guards/gql-throttler.guard.js';
 
 // Temporarily add these imports
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Customer, CustomerDocument } from './schemas/customer.schema.js';
+// import { InjectModel } from '@nestjs/mongoose';
+// import { Model } from 'mongoose';
+// import { Customer, CustomerDocument } from './schemas/customer.schema.js';
 
 @Resolver(() => CategoryReport)
 export class AnalyticsResolver {
   constructor(
     private readonly analyticsService: AnalyticsService,
-    @InjectModel(Customer.name)
-    private readonly customerModel: Model<CustomerDocument>,
+    // @InjectModel(Customer.name)
+    // private readonly customerModel: Model<CustomerDocument>,
   ) {}
 
+  @UseGuards(GqlThrottlerGuard)
   @Query(() => [CategoryReport], { name: 'categoryReports' })
   async getCategoryReports(
     @Args('filter', { type: () => DateRangeInput, nullable: true })

@@ -18,7 +18,7 @@
 1. **Встановлення бібліотеки DataLoader**:
    - Додано пакет `dataloader` (із вбудованими типами TypeScript) для пакетування та мемоізації запитів у межах одного тику Event Loop.
 
-2. **Створення фабрики лоадерів у [src/analytics/loaders/customer.loader.ts](file:///home/bohdan/MyProjects/test_projects/insight-pulse-service/src/analytics/loaders/customer.loader.ts)**:
+2. **Створення фабрики лоадерів у [src/analytics/loaders/customer.loader.ts](../src/analytics/loaders/customer.loader.ts)**:
    - Створено клас `CustomerLoaderFactory`, заінжектовано модель Mongoose `Customer`.
    - **Врахування архітектури схеми**: оскільки поле `_id` у схемі `Customer` є рядком UUID (`string`), запит до MongoDB виконується безпосередньо через `{ _id: { $in: customerIds } }` без непотрібного кастингу до `ObjectId`.
    - **Гарантія контракту DataLoader**: база даних MongoDB через оператор `$in` не гарантує збереження початкового порядку записів. Для забезпечення суворої відповідності порядку та довжини масив результатів індексується через `Map<string, CustomerDocument>`, після чого формується результуючий масив строго за вхідними ключами:
@@ -27,7 +27,7 @@
      return customerIds.map((id) => customerMap.get(id) ?? null);
      ```
 
-3. **Request-scoped ізоляція у [src/app.module.ts](file:///home/bohdan/MyProjects/test_projects/insight-pulse-service/src/app.module.ts)**:
+3. **Request-scoped ізоляція у [src/app.module.ts](../src/app.module.ts)**:
    - Зареєстровано та експортовано `CustomerLoaderFactory` з `AnalyticsModule`.
    - `GraphQLModule` переведено на асинхронну ініціалізацію `forRootAsync<ApolloDriverConfig>()`.
    - У функції `context` на кожен вхідний HTTP-запит створюється новий екземпляр `DataLoader`:
@@ -41,11 +41,11 @@
    - **Чому це критично:** глобальний екземпляр (Singleton) призвів би до витоку пам'яті (пам'ять ніколи не очищується) та порушення ізоляції даних (користувач Б міг би отримати з кешу конфіденційні дані користувача А). Створення лоадера в `context` гарантує ізоляцію в межах одного HTTP-запиту.
 
 4. **Опис моделей та оновлення схеми**:
-   - Створено GraphQL ObjectType [src/analytics/models/customer.model.ts](file:///home/bohdan/MyProjects/test_projects/insight-pulse-service/src/analytics/models/customer.model.ts) (`id`, `name`, `email`, `tier`).
-   - У [src/analytics/models/category-report.model.ts](file:///home/bohdan/MyProjects/test_projects/insight-pulse-service/src/analytics/models/category-report.model.ts) додано поле `topCustomerId?: string` (`{ nullable: true }`).
-   - У пайплайн агрегації [src/analytics/analytics.service.ts](file:///home/bohdan/MyProjects/test_projects/insight-pulse-service/src/analytics/analytics.service.ts) додано збереження `topCustomerId: { $first: '$customerId' }` у `$group` та `$project`.
+   - Створено GraphQL ObjectType [src/analytics/models/customer.model.ts](../src/analytics/models/customer.model.ts) (`id`, `name`, `email`, `tier`).
+   - У [src/analytics/models/category-report.model.ts](../src/analytics/models/category-report.model.ts) додано поле `topCustomerId?: string` (`{ nullable: true }`).
+   - У пайплайн агрегації [src/analytics/analytics.service.ts](../src/analytics/analytics.service.ts) додано збереження `topCustomerId: { $first: '$customerId' }` у `$group` та `$project`.
 
-5. **Реалізація пакетного резолвера у [src/analytics/analytics.resolver.ts](file:///home/bohdan/MyProjects/test_projects/insight-pulse-service/src/analytics/analytics.resolver.ts)**:
+5. **Реалізація пакетного резолвера у [src/analytics/analytics.resolver.ts](../src/analytics/analytics.resolver.ts)**:
    ```typescript
    @ResolveField(() => CustomerModel, { nullable: true })
    async topPerformerCustomer(
@@ -68,7 +68,7 @@
 
 ### 🔬 Експериментальне порівняння: З DataLoader та Без нього
 
-Завдяки активованому `mongoose.set('debug', true)` у [src/main.ts](file:///home/bohdan/MyProjects/test_projects/insight-pulse-service/src/main.ts) було на практиці зафіксовано різницю поведінки:
+Завдяки активованому `mongoose.set('debug', true)` у [src/main.ts](../src/main.ts) було на практиці зафіксовано різницю поведінки:
 
 #### ❌ Варіант 1: Прямий виклик бази у резолвері (Класична проблема N+1)
 ```typescript
@@ -116,7 +116,7 @@ graph TD
 
 ### 1. Обмеження глибини запиту (Query Depth Limiting)
 - **Пакет**: `graphql-depth-limit` та типи `@types/graphql-depth-limit`.
-- **Конфігурація**: додано правило валідації `validationRules: [depthLimit(5)]` у [src/app.module.ts](file:///home/bohdan/MyProjects/test_projects/insight-pulse-service/src/app.module.ts).
+- **Конфігурація**: додано правило валідації `validationRules: [depthLimit(5)]` у [src/app.module.ts](../src/app.module.ts).
 - **Механіка роботи**: Apollo Server аналізує вхідне AST-дерево запиту ще до старту виконання. Скалярні поля (листя) не збільшують глибину, а обчислюється кількість переходів між об'єктними блоками вибору (`selectionSet`). Перевірка строго більше `depthSoFar > maxDepth` миттєво відсікає рекурсивні та циклічні графи (наприклад, `category -> products -> category -> products...`).
 - **Верифікація**: при тестовому ліміті `depthLimit(1)` трирівневий запит миттєво блокується з повідомленням `'TestDepth' exceeds maximum operation depth of 1`.
 
@@ -124,7 +124,7 @@ graph TD
 
 ### 2. Аналіз складності запитів (Query Complexity Analysis)
 - **Пакет**: `graphql-query-complexity`.
-- **Конфігурація**: створено вбудований плагін Apollo Server у [src/app.module.ts](file:///home/bohdan/MyProjects/test_projects/insight-pulse-service/src/app.module.ts).
+- **Конфігурація**: створено вбудований плагін Apollo Server у [src/app.module.ts](../src/app.module.ts).
 - **Механіка роботи**: 
   - На етапі `didResolveOperation` плагін отримує скомпільовану схему з `requestDidStart({ schema })`.
   - Калькулятор обчислює вартість запиту на базі оцінювачів: `simpleEstimator({ defaultComplexity: 1 })` призначає кожному полю 1 бал, а `fieldExtensionsEstimator()` враховує кастомні складності.
@@ -135,7 +135,7 @@ graph TD
 
 ### 3. Rate Limiting через Throttler
 - **Пакет**: `@nestjs/throttler`.
-- **Вирішення проблеми версійності NestJS 12 у [package.json](file:///home/bohdan/MyProjects/test_projects/insight-pulse-service/package.json)**:
+- **Вирішення проблеми версійності NestJS 12 у [package.json](../package.json)**:
   Оскільки `@nestjs/throttler@6.5` декларував `peerDependencies` до NestJS 11, було додано блок `overrides` для примусової сумісності з NestJS 12:
   ```json
   "overrides": {
@@ -146,7 +146,7 @@ graph TD
     }
   }
   ```
-- **Кастомний гвард [src/analytics/guards/gql-throttler.guard.ts](file:///home/bohdan/MyProjects/test_projects/insight-pulse-service/src/analytics/guards/gql-throttler.guard.ts)**:
+- **Кастомний гвард [src/analytics/guards/gql-throttler.guard.ts](../src/analytics/guards/gql-throttler.guard.ts)**:
   GraphQL працює поверх єдиного маршруту `/graphql`. Щоб отримати клієнтські об'єкти `req` та `res` (і IP-адресу клієнта), гвард адаптує контекст:
   ```typescript
   @Injectable()

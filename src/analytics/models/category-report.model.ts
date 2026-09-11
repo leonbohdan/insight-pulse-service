@@ -20,6 +20,9 @@ export class CategoryReport {
   @Field(() => String)
   category: string;
 
+  @Field(() => String, { nullable: true })
+  topCustomerId?: string;
+
   @Field(() => CategoryMetrics)
   metrics: CategoryMetrics;
 }

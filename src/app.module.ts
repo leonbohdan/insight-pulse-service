@@ -7,6 +7,7 @@ import { AnalyticsModule } from './analytics/analytics.module.js';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
+import { CustomerLoaderFactory } from './analytics/loaders/customer.loader.js';
 
 @Module({
   imports: [
@@ -21,11 +22,18 @@ import { join } from 'path';
       inject: [ConfigService],
     }),
     AnalyticsModule,
-    GraphQLModule.forRoot<ApolloDriverConfig>({
+    GraphQLModule.forRootAsync<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
-      sortSchema: true,
-      playground: true,
+      imports: [AnalyticsModule],
+      inject: [CustomerLoaderFactory],
+      useFactory: (customerLoaderFactory: CustomerLoaderFactory) => ({
+        autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+        sortSchema: true,
+        playground: true,
+        context: () => ({
+          customerLoader: customerLoaderFactory.createLoader(),
+        }),
+      }),
     }),
   ],
   controllers: [AppController],
